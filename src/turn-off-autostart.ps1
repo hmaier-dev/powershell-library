@@ -21,14 +21,10 @@ if (!(Test-Path $MDM_data))
 ## Starting point of the actual logic
 Start-Transcript -Path $current_log -Force
 
-# Define the path to the registry key for WebEx auto-start
-$registryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-# Specify the name of the WebEx entry (change this to match your specific WebEx installation)
-$webexEntryName = "CiscoSpark"
-Remove-ItemProperty -Path $registryPath -Name $webexEntryName
+# Run this as 64bit PowerShell Host (e.g. Intune option)
 
-# If this Get- fails the Removal was successful
-Get-ItemProperty -Path $registryPath -Name $webexEntryName
+Set-Location HKLM:
+Remove-Itemproperty -Path 'HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Run' -Name 'CiscoSpark'
 
 Stop-Transcript
 ## End Point
