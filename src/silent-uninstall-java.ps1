@@ -1,51 +1,3 @@
-# param (
-#   [Parameter(ValueFromPipeline=$true)]
-#   [string[]]$ComputerName = $env:COMPUTERNAME,
-#   [string]$NameRegex = ''
-# )
-
-## This should be run directly on a machine
-function main(){
-	$java = Get-AllInstalledSoftware | Where-Object { $_.DisplayName -match "java" }
-
-	if ($java -eq $null){
-		Write-Output "No Java was found."
-		exit 0
-	}
-
-	# Multiple Java Entries can occure
-	foreach($j in $java){
-		$id = $java.IdentifyingNumber
-		uninstall "$id"
-	}
-}
-
-
-
-## Standard Paths
-$MDM_home = $(Join-Path $env:ProgramData MDM)
-$MDM_logs = $(Join-Path $MDM_home logs)
-$MDM_data = $(Join-Path $MDM_home data)
-
-## App/Usage related
-$pkg_name = "Java-Uninstaller"
-$current_log = "$MDM_logs\$pkg_name.log"
-
-## Testing MDM directorys
-if (!(Test-Path $MDM_logs))
-{
-  New-Item -Path $MDM_logs -ItemType Directory -Force -Confirm:$false
-}
-if (!(Test-Path $MDM_data))
-{
-  New-Item -Path $MDM_data -ItemType Directory -Force -Confirm:$false
-}
-
-## Starting point of the actual logic
-Start-Transcript -Path $current_log -Force
-main
-Stop-Transcript
-## End Point
 
 ## ----------------------------------------------------------------------------------------------------------------------------
 ## Helper Functions
@@ -101,9 +53,51 @@ function Get-AllInstalledSoftware
 function uninstall($id){
 	try{
 		Write-Output "Uninstalling $id..."
-		Start-Process -FilePath "msiexec.exe" -ArgumentList "/x $id /quiet" -Wait -PassThru
+		Start-Process -FilePath "msiexec.exe" -ArgumentList "/X $id /quiet" -Wait -PassThru
 		Write-Output "Successful uninstall!"
 	}catch{
 		Write-Output "Error: $_"
 	}
 }
+
+## This should be run directly on the machine
+function main(){
+	$java = Get-AllInstalledSoftware | Where-Object { $_.DisplayName -match "java" -and $_.Publisher -match "Oracle Corporation"}
+	if ($java -eq $null){
+		Write-Output "No Java was found."
+		exit 0
+	}
+
+	# Multiple Java Entries can occure
+	foreach($j in $java){
+		$id = $j.IdentifyingNumber
+		uninstall "$id"
+	}
+}
+
+## Standard Paths
+$MDM_home = $(Join-Path $env:ProgramData MDM)
+$MDM_logs = $(Join-Path $MDM_home logs)
+$MDM_data = $(Join-Path $MDM_home data)
+
+## App/Usage related
+$pkg_name = "Java-Uninstaller"
+$current_log = "$MDM_logs\$pkg_name.log"
+
+## Testing MDM directorys
+if (!(Test-Path $MDM_logs))
+{
+  New-Item -Path $MDM_logs -ItemType Directory -Force -Confirm:$false
+}
+if (!(Test-Path $MDM_data))
+{
+  New-Item -Path $MDM_data -ItemType Directory -Force -Confirm:$false
+}
+
+## Starting point of the actual logic
+Start-Transcript -Path $current_log -Force
+
+main
+Stop-Transcript
+## End Point
+
